@@ -1,10 +1,10 @@
 <template>
   <div
     v-if="!activePoll"
-    class="bg-slate-700 rounded-lg p-8 text-center"
+    class="bg-gray-100 rounded-lg p-8 text-center border border-gray-200"
   >
-    <p class="text-slate-300 text-lg">
-      Waiting for the next poll...
+    <p class="text-gray-600 text-lg">
+      En attente du prochain vote...
     </p>
   </div>
 
@@ -12,8 +12,8 @@
     v-else
     class="space-y-6"
   >
-    <div class="bg-slate-700 rounded-lg p-6 mb-6">
-      <h3 class="text-xl font-semibold text-white">
+    <div class="bg-white rounded-lg p-6 mb-6 border border-gray-200">
+      <h3 class="text-xl font-semibold text-gray-900">
         {{ activePoll.title }}
       </h3>
     </div>

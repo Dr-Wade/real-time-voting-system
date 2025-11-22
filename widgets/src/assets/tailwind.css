@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+@import "tailwindcss";
 
 @config '../../tailwind.config.cjs';
 
@@ -10,13 +10,14 @@
   If we ever want to remove these styles, we need to add an explicit border
   color utility to any element that depends on these defaults.
 */
+
 @layer base {
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--tw-border-color, currentcolor);
   }
 
   button:not(:disabled),
@@ -25,84 +26,51 @@
   }
 }
 
-.fade-enter-active, .fade-leave-active {
-    transition: opacity .3s;
-}
-  
-.fade-enter-from, .fade-leave-to {
-    opacity: 0;
-}
-
-input[type="text"], input[type="number"] {
-    @apply rounded-md border-0 py-1.5 text-gray-900 shadow-xs ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600;
-}
-
-.slider-0, .slider-1, .slider-2 {
-    --slider-height: 10px;
-}
-.slider-0 {
-    --slider-connect-bg: var(--color-green-500)
-}
-.slider-1 {
-    --slider-connect-bg: var(--color-amber-500)
-}
-.slider-2 {
-    --slider-connect-bg: var(--color-blue-500)
-}
-
-.slider-target:not(:first-child) > .slider-base {
-    border-bottom-right-radius: 0;
-    border-top-right-radius: 0;
-}
-
-/* LOADER */
-.loader {
-    width: 48px;
-    height: 48px;
-    border: 5px solid #ccc;
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    display: inline-block;
-    box-sizing: border-box;
-    animation: rotation 1s linear infinite;
-}
-
-@keyframes rotation {
-    0% {
-        transform: rotate(0deg);
-    }
-    100% {
-        transform: rotate(360deg);
-    }
-}
-
-/* PROGRESS */
-@property --progress-width {
-    initial-value: 100%;
-    inherits: true;
-    syntax: '<percentage>';
-}
-
-@keyframes progress-down {
-    to {
-        --progress-width: 0%;
-    }
-}
-
-.progress-bar {
-    width: var(--progress-width);
-    animation: progress-down 5s linear forwards;
-}
-
-/* Select Field */
-.select-field {
-    @apply flex flex-col w-full gap-x-5 items-start;
-}
-
-.select-field > :first-child {
-    @apply text-sm;
-}
-
-.select-field > :nth-child(2) {
-    @apply w-full;
+:host {
+    --tw-divide-y-reverse: 0;
+    --tw-border-style: solid;
+    --tw-font-weight: initial;
+    --tw-tracking: initial;
+    --tw-translate-x: 0;
+    --tw-translate-y: 0;
+    --tw-translate-z: 0;
+    --tw-rotate-x: rotateX(0);
+    --tw-rotate-y: rotateY(0);
+    --tw-rotate-z: rotateZ(0);
+    --tw-skew-x: skewX(0);
+    --tw-skew-y: skewY(0);
+    --tw-space-x-reverse: 0;
+    --tw-gradient-position: initial;
+    --tw-gradient-from: #0000;
+    --tw-gradient-via: #0000;
+    --tw-gradient-to: #0000;
+    --tw-gradient-stops: initial;
+    --tw-gradient-via-stops: initial;
+    --tw-gradient-from-position: 0%;
+    --tw-gradient-via-position: 50%;
+    --tw-gradient-to-position: 100%;
+    --tw-shadow: 0 0 #0000;
+    --tw-shadow-color: initial;
+    --tw-inset-shadow: 0 0 #0000;
+    --tw-inset-shadow-color: initial;
+    --tw-ring-color: initial;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-inset-ring-color: initial;
+    --tw-inset-ring-shadow: 0 0 #0000;
+    --tw-ring-inset: initial;
+    --tw-ring-offset-width: 0px;
+    --tw-ring-offset-color: #fff;
+    --tw-ring-offset-shadow: 0 0 #0000;
+    --tw-blur: initial;
+    --tw-brightness: initial;
+    --tw-contrast: initial;
+    --tw-grayscale: initial;
+    --tw-hue-rotate: initial;
+    --tw-invert: initial;
+    --tw-opacity: initial;
+    --tw-saturate: initial;
+    --tw-sepia: initial;
+    --tw-drop-shadow: initial;
+    --tw-duration: initial;
+    --tw-ease: initial;
 }

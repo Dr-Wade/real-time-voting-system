@@ -1,0 +1,15 @@
+{
+  "name": "live-vote",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "docker:build": "docker build -t live-vote .",
+    "docker:tag": "docker tag live-vote drwade/live-vote:latest",
+    "docker:push": "docker push drwade/live-vote:latest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.11.1"
+}

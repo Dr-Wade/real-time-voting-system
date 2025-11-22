@@ -1,7 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { object, string } from "zod";
 import { prisma } from "../../lib/prisma";
-import { redis } from "../../lib/redis";
 import { voting } from "../../utils/voting-pub-sub";
 import { authenticate, AuthenticatedRequest } from "../middlewares/auth";
 import { canUserVoteOnEventType } from "../../utils/event-access";
@@ -105,15 +104,16 @@ export async function voteOnPoll(app: FastifyInstance) {
         },
       });
 
-      const votes = await redis.zincrby(
-        pollId,
-        -1,
-        userPreviousVoteOnPoll.pollOptionId
-      );
+      // Get updated vote count for previous option
+      const previousVoteCount = await prisma.vote.count({
+        where: {
+          pollOptionId: userPreviousVoteOnPoll.pollOptionId,
+        },
+      });
 
       voting.publish(pollId, {
         pollOptionId: userPreviousVoteOnPoll.pollOptionId,
-        votes: Number(votes),
+        votes: previousVoteCount,
       });
     }
 
@@ -127,11 +127,16 @@ export async function voteOnPoll(app: FastifyInstance) {
       },
     });
 
-    const votes = await redis.zincrby(pollId, 1, pollOptionId);
+    // Get updated vote count for new option
+    const newVoteCount = await prisma.vote.count({
+      where: {
+        pollOptionId,
+      },
+    });
 
     voting.publish(pollId, {
       pollOptionId,
-      votes: Number(votes),
+      votes: newVoteCount,
     });
 
     return reply.status(201).send();

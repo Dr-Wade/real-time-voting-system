@@ -148,6 +148,49 @@ export const usePolls = defineStore("polls", () => {
         }
     };
 
+    const deletePoll = async (pollId: string): Promise<void> => {
+        if (!currentEventId.value) {
+            console.error("No event ID set");
+            return;
+        }
+
+        if (!confirm("Are you sure you want to delete this poll?")) {
+            return;
+        }
+
+        isLoading.value = true;
+        message.text = "";
+
+        try {
+            await axios.delete(`/events/${currentEventId.value}/polls/${pollId}`);
+            message.text = "Poll deleted successfully!";
+            message.type = "success";
+            
+            // Remove from list
+            list.value = list.value.filter(p => p.id !== pollId);
+            stats.totalPolls--;
+            
+            // Reset form if deleted poll was selected
+            if (selected.value === pollId) {
+                resetForm();
+                goToCreate();
+            }
+
+            setTimeout(() => {
+                message.text = "";
+            }, 3000);
+        } catch (err: unknown) {
+            if (isAxiosError(err)) {
+                message.text = (err.response?.data as Record<string, unknown>)?.message as string || "Failed to delete poll";
+            } else {
+                message.text = "An unexpected error occurred";
+            }
+            message.type = "error";
+        } finally {
+            isLoading.value = false;
+        }
+    };
+
     return {
         form,
         message,
@@ -162,6 +205,7 @@ export const usePolls = defineStore("polls", () => {
         removeOption,
         resetForm,
         upsertPoll,
+        deletePoll,
         fetchPolls,
         selectPoll,
         goToCreate

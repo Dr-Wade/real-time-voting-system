@@ -1,6 +1,6 @@
 import { createApp, defineCustomElement, h } from "vue";
 import { createPinia } from "pinia";
-import MyVote from "./vote/myVote.vue";
+import MyVote from "./vote/MyVote.vue";
 import styles from "@/assets/tailwind.css?inline";
 
 const MyVoteElement = defineCustomElement({
@@ -11,4 +11,4 @@ const MyVoteElement = defineCustomElement({
         return () => h(MyVote);
     }
 });
-customElements.define("my-vote", MyVote);
+customElements.define("my-vote", MyVoteElement);

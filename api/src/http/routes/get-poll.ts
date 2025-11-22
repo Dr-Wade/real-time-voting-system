@@ -1,7 +1,6 @@
 import { FastifyInstance } from "fastify";
 import { object, string } from "zod";
 import { prisma } from "../../lib/prisma";
-import { redis } from "../../lib/redis";
 import { authenticate, AuthenticatedRequest } from "../middlewares/auth";
 
 export async function getPoll(app: FastifyInstance) {
@@ -25,23 +24,27 @@ export async function getPoll(app: FastifyInstance) {
       },
     });
 
-    // Enrich polls with vote scores
+    // Enrich polls with vote scores from database
     const enrichedPolls = await Promise.all(
-      polls.map(async (poll) => {
-        const result = await redis.zrange(poll.id, 0, -1, "WITHSCORES");
-        const votes = result.reduce((obj, line, index) => {
-          if (index % 2 === 0) {
-            const score = result[index + 1];
-            Object.assign(obj, { [line]: Number(score) });
-          }
+      polls.map(async (poll: any) => {
+        const voteCounts = await prisma.vote.groupBy({
+          by: ["pollOptionId"],
+          where: { pollId: poll.id },
+          _count: {
+            id: true,
+          },
+        });
+
+        const votes = voteCounts.reduce((obj: any, vc: any) => {
+          obj[vc.pollOptionId] = vc._count.id;
           return obj;
         }, {} as Record<string, number>);
 
         return {
           ...poll,
-          options: poll.options.map((option) => ({
+          options: poll.options.map((option: any) => ({
             ...option,
-            score: option.id in votes ? votes[option.id] : 0,
+            score: votes[option.id] || 0,
           })),
         };
       })
@@ -77,16 +80,17 @@ export async function getPoll(app: FastifyInstance) {
       return reply.status(400).send({ message: "Poll not found!" });
     }
 
-    // Bring each alternative with respective score
-    const result = await redis.zrange(pollId, 0, -1, "WITHSCORES");
+    // Get vote counts from database
+    const voteCounts = await prisma.vote.groupBy({
+      by: ["pollOptionId"],
+      where: { pollId },
+      _count: {
+        id: true,
+      },
+    });
 
-    const votes = result.reduce((obj, line, index) => {
-      if (index % 2 === 0) {
-        const score = result[index + 1];
-
-        Object.assign(obj, { [line]: Number(score) });
-      }
-
+    const votes = voteCounts.reduce((obj: any, vc: any) => {
+      obj[vc.pollOptionId] = vc._count.id;
       return obj;
     }, {} as Record<string, number>);
 
@@ -94,11 +98,11 @@ export async function getPoll(app: FastifyInstance) {
       poll: {
         id: poll.id,
         title: poll.title,
-        options: poll.options.map((option) => {
+        options: poll.options.map((option: any) => {
           return {
             id: option.id,
             title: option.title,
-            score: option.id in votes ? votes[option.id] : 0,
+            score: votes[option.id] || 0,
           };
         }),
       },

@@ -2,10 +2,11 @@ import { FastifyInstance } from "fastify";
 import { array, object, string } from "zod";
 import { prisma } from "../../lib/prisma";
 import { admin } from "../../utils/admin-pub-sub";
+import { events as eventsPubSub } from "../../utils/events-pub-sub";
 import { AuthenticatedRequest, authenticate, requireAdmin } from "../middlewares/auth";
 
 export async function events(app: FastifyInstance) {
-  // GET all events (authenticated, filtered by user's allowedEventTypes)
+  // GET all events (authenticated, filtered by user's allowedEventTypes, or all for admin)
   app.get("/events", { onRequest: [authenticate] }, async (request, reply) => {
     try {
       const user = (request as AuthenticatedRequest).user;
@@ -13,20 +14,25 @@ export async function events(app: FastifyInstance) {
         return reply.status(401).send({ message: "Authentication required" });
       }
 
-      // Get user's allowed event types
-      const dbUser = await prisma.user.findUnique({
-        where: { personID: user.personID },
-      });
+      const adminPersonID = process.env.ADMIN_PERSON_ID;
+      const isAdmin = adminPersonID && user.personID === adminPersonID;
 
-      if (!dbUser) {
-        return reply.status(404).send({ message: "User not found" });
+      // If user is admin, show all events
+      // Otherwise, filter by user's allowedEventTypes
+      let whereClause: any = {};
+
+      if (!isAdmin) {
+        // Get user's allowed event types
+        const dbUser = await prisma.user.findUnique({
+          where: { personID: user.personID },
+        });
+
+        if (!dbUser) {
+          return reply.status(404).send({ message: "User not found" });
+        }
+
+        whereClause = { type: { in: dbUser.allowedEventTypes } };
       }
-
-      // If allowedEventTypes is empty, user can see all events
-      // Otherwise, filter to only allowed event types
-      const whereClause = dbUser.allowedEventTypes.length > 0
-        ? { type: { in: dbUser.allowedEventTypes } }
-        : {};
 
       const allEvents = await prisma.event.findMany({
         where: whereClause,
@@ -271,6 +277,16 @@ export async function events(app: FastifyInstance) {
           event: updatedEvent,
         },
       });
+
+      // Also publish to events list if event was activated/deactivated
+      if (typeof data.active === "boolean") {
+        eventsPubSub.publish({
+          type: messageType as "event_activated" | "event_deactivated",
+          data: {
+            event: updatedEvent,
+          },
+        });
+      }
 
       return reply.status(200).send({ event: updatedEvent });
     } catch (error) {

@@ -5,7 +5,8 @@
   "main": "index.ts",
   "type": "module",
   "scripts": {
-    "import": "tsx src/import.ts"
+    "import": "tsx src/import.ts",
+    "load-test": "tsx src/load-test.ts"
   },
   "keywords": [],
   "author": "",
@@ -14,7 +15,8 @@
   "dependencies": {
     "prisma": "^5.9.1",
     "@prisma/client": "^5.9.1",
-    "csv-parse": "^5.5.6"
+    "csv-parse": "^5.5.6",
+    "axios": "^1.7.7"
   },
   "devDependencies": {
     "tsx": "^4.7.0"

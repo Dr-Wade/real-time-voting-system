@@ -65,4 +65,43 @@ export async function createPoll(app: FastifyInstance) {
 
     return reply.status(201).send({ pollId: poll.id });
   });
+
+  app.delete("/events/:eventId/polls/:pollId", { onRequest: [authenticate, requireAdmin] }, async (request, reply) => {
+    const deletePollParams = object({
+      eventId: string().trim().uuid(),
+      pollId: string().trim().uuid(),
+    });
+
+    const { eventId, pollId } = deletePollParams.parse(request.params);
+
+    try {
+      const existingPoll = await prisma.poll.findUnique({
+        where: { id: pollId },
+      });
+
+      if (!existingPoll) {
+        return reply.status(404).send({ message: "Poll not found!" });
+      }
+
+      // Delete all votes associated with this poll
+      await prisma.vote.deleteMany({
+        where: { pollId },
+      });
+
+      // Delete all options associated with this poll
+      await prisma.pollOption.deleteMany({
+        where: { pollId },
+      });
+
+      // Delete the poll
+      await prisma.poll.delete({
+        where: { id: pollId },
+      });
+
+      return reply.status(200).send({ message: "Poll deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting poll:", error);
+      return reply.status(400).send({ message: "Failed to delete poll" });
+    }
+  });
 }

@@ -1,16 +1,16 @@
 <template>
   <div class="space-y-4">
     <button
-      class="flex items-center gap-2 text-slate-400 hover:text-white transition-colors mb-4"
+      class="flex items-end gap-2 text-gray-600 hover:text-gray-900 transition-colors mb-4"
       @click="$emit('back')"
     >
       <span class="text-xl">←</span>
-      Back to Events
+      Retour
     </button>
 
-    <div class="bg-slate-700 rounded-lg p-6">
+    <div class="bg-white rounded-lg p-6 border border-gray-200">
       <div class="flex items-center justify-between mb-2">
-        <h2 class="text-2xl font-bold text-white">
+        <h2 class="text-2xl font-bold text-gray-900">
           {{ event.name }}
         </h2>
         <div
@@ -18,12 +18,9 @@
           class="flex items-center gap-2"
         >
           <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-          <span class="text-green-400 text-sm font-semibold">LIVE</span>
+          <span class="text-green-700 text-sm font-semibold">LIVE</span>
         </div>
       </div>
-      <p class="text-slate-400">
-        {{ event.type }}
-      </p>
     </div>
   </div>
 </template>

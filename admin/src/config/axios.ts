@@ -2,7 +2,7 @@ import axios from "axios";
 import { getApiUrl } from "./api";
 
 const instance = axios.create({
-    baseURL: getApiUrl(""),
+    baseURL: getApiUrl("/api"),
 });
 
 // Add auth token to requests

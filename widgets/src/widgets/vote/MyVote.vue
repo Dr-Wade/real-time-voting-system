@@ -1,38 +1,23 @@
 <template>
-  <div class="min-h-screen bg-linear-to-br from-slate-900 to-slate-800 p-4">
-    <div class="min-w-lg max-w-2xl mx-auto">
+  <div class="min-h-screen bg-linear-to-br from-white to-gray-50 p-4">
+    <div class="min-w-[80vw] max-w-2xl mx-auto">
       <!-- Access Denied View -->
       <div
         v-if="accessDenied"
-        class="bg-slate-700 rounded-lg shadow-xl p-8 w-full max-w-md mx-auto mt-20"
+        class="bg-white rounded-lg shadow-xl p-8 w-full max-w-md mx-auto mt-20 border border-gray-200"
       >
-        <h1 class="text-3xl font-bold text-white mb-2">
-          Access Denied
+        <h1 class="text-xl font-bold text-gray-900 mb-2">
+          Accès non autorisé
         </h1>
-        <p class="text-slate-400">
-          You don't have access to the voting system.
+        <p class="text-gray-600">
+          Tu n'as pas accès au système de vote
         </p>
       </div>
 
-      <!-- Voting View (after login) -->
       <template v-else>
-        <!-- Header -->
-        <div class="mb-8 flex justify-between items-center">
-          <div>
-            <h1 class="text-4xl font-bold text-white mb-2">
-              Live Voting
-            </h1>
-            <p class="text-slate-400">
-              Cast your vote on active events
-            </p>
-          </div>
-        </div>
-
-        <!-- Events List View -->
         <EventsList
           v-if="!selectedEvent"
           :events="events"
-          :is-loading="isLoadingEvents"
           @select="selectEvent"
         />
 
@@ -48,16 +33,11 @@
 
           <PollDisplay :active-poll="selectedEvent.activePoll">
             <!-- Loading Phase -->
-            <div
-              v-if="isLoadingPoll"
-              class="flex justify-center items-center py-8"
-            >
-              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
-            </div>
+            <div v-if="isLoadingPoll" />
 
             <!-- Voting Phase -->
             <VotingPhase
-              v-if="!userVote && !isVoting"
+              v-if="!userVote && !isVoting && props.canvote"
               :is-voting="isVoting"
               :options="pollOptions"
               :selected-option="selectedOption"
@@ -68,6 +48,7 @@
             <!-- Results Phase -->
             <ResultsPhase
               v-else
+              :can-vote="props.canvote"
               :options="pollOptions"
             />
           </PollDisplay>
@@ -85,7 +66,6 @@ import EventHeader from "./EventHeader.vue";
 import PollDisplay from "./PollDisplay.vue";
 import VotingPhase from "./VotingPhase.vue";
 import ResultsPhase from "./ResultsPhase.vue";
-import { useSession, type StandardProps } from "../../stores/session.store";
 
 
 const API_URL = (import.meta.env as Record<string, string>).VITE_API_URL || "http://localhost:3333";
@@ -109,10 +89,15 @@ interface PollOption {
     score?: number
 }
 
-const props = defineProps<StandardProps>();
-const session = useSession();
+const props = defineProps<{
+    personid: string
+    token: string
+    canvote: boolean
+}>();
 
-onBeforeMount(() => session.init(props));
+defineEmits<{
+    logout: []
+}>();
 
 // Authentication state
 const isAuthenticated = ref(false);
@@ -138,17 +123,13 @@ const autoLogin = async () => {
 
     try {
         // Login with personID and password hash
-        const loginResponse = await axios.post(`${API_URL}/auth/login`, {
+        const loginResponse = await axios.post(`${API_URL}/api/auth/login`, {
             personID: props.personid,
             password: props.token,
         });
 
         const token = loginResponse.data.token;
         authToken.value = token;
-        session.init({
-            personid: props.personid,
-            token: token,
-        });
 
         isAuthenticated.value = true;
 
@@ -170,7 +151,7 @@ const getAuthHeaders = () => ({
 const fetchEvents = async () => {
     isLoadingEvents.value = true;
     try {
-        const response = await axios.get(`${API_URL}/events`, getAuthHeaders());
+        const response = await axios.get(`${API_URL}/api/events`, getAuthHeaders());
         // Filter to only show active events
         events.value = (response.data.events || []).filter((event: Event) => event.active);
     } catch (error) {
@@ -195,14 +176,15 @@ const fetchPollOptions = async (pollId: string) => {
 
     isLoadingPoll.value = true;
     try {
-        const response = await axios.get(`${API_URL}/events/${selectedEvent.value.id}/polls/${pollId}`, getAuthHeaders());
+        const response = await axios.get(`${API_URL}/api/events/${selectedEvent.value.id}/polls/${pollId}`, getAuthHeaders());
         const poll = response.data.poll;
+        console.log("Fetched poll options:", poll.options);
         pollOptions.value = poll.options || [];
 
         // Check if user has already voted on this poll
         try {
             const voteResponse = await axios.get(
-                `${API_URL}/events/${selectedEvent.value.id}/polls/${pollId}/my-vote`,
+                `${API_URL}/api/events/${selectedEvent.value.id}/polls/${pollId}/my-vote`,
                 getAuthHeaders()
             );
             if (voteResponse.status === 200 && voteResponse.data.pollOptionId) {
@@ -232,7 +214,7 @@ const castVote = async () => {
     isVoting.value = true;
     try {
         await axios.post(
-            `${API_URL}/events/${selectedEvent.value.id}/polls/${selectedEvent.value.activePoll.id}/votes`,
+            `${API_URL}/api/events/${selectedEvent.value.id}/polls/${selectedEvent.value.activePoll.id}/votes`,
             {
                 pollOptionId: selectedOption.value,
             },
@@ -262,6 +244,7 @@ const getTotalVotes = (): number => {
 // WebSocket connections
 const pollResultsSocket = ref<WebSocket | null>(null);
 const eventUpdatesSocket = ref<WebSocket | null>(null);
+const eventsListSocket = ref<WebSocket | null>(null);
 
 const connectToPollResults = (pollId: string) => {
     try {
@@ -284,10 +267,12 @@ const connectToPollResults = (pollId: string) => {
         socket.onmessage = event => {
             try {
                 const message = JSON.parse(event.data);
+                console.log("Poll results update:", message);
                 // Update the specific option's score
                 const option = pollOptions.value.find(opt => opt.id === message.pollOptionId);
                 if (option) {
                     option.score = message.votes;
+                    console.log("Updated option score:", option);
                 }
             } catch (error) {
                 console.error("Failed to parse poll results message:", error);
@@ -367,6 +352,53 @@ const connectToEventUpdates = (eventId: string) => {
     }
 };
 
+const connectToEventsList = () => {
+    try {
+        if (eventsListSocket.value) {
+            eventsListSocket.value.close();
+            eventsListSocket.value = null;
+        }
+
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const host = new URL(API_URL).host;
+        const url = `${protocol}//${host}/events/updates`;
+
+        const socket = new WebSocket(url);
+
+        socket.onopen = () => {
+            console.log("Connected to events list WebSocket");
+            eventsListSocket.value = socket;
+        };
+
+        socket.onmessage = event => {
+            try {
+                const message = JSON.parse(event.data);
+                console.log("Events list update received:", message.type);
+
+                if (message.type === "event_activated" || message.type === "event_deactivated") {
+                    // Refresh the events list
+                    fetchEvents();
+                }
+            } catch (error) {
+                console.error("Failed to parse events list message:", error);
+            }
+        };
+
+        socket.onerror = error => {
+            console.error("Events list WebSocket error:", error);
+        };
+
+        socket.onclose = () => {
+            console.log("Disconnected from events list");
+            if (eventsListSocket.value === socket) {
+                eventsListSocket.value = null;
+            }
+        };
+    } catch (error) {
+        console.error("Failed to connect to events list:", error);
+    }
+};
+
 // Watch for active poll changes
 watch(
     () => selectedEvent.value?.activePoll?.id,
@@ -397,10 +429,15 @@ const disconnectWebSockets = () => {
         eventUpdatesSocket.value.close();
         eventUpdatesSocket.value = null;
     }
+    if (eventsListSocket.value) {
+        eventsListSocket.value.close();
+        eventsListSocket.value = null;
+    }
 };
 
 onMounted(() => {
     autoLogin();
+    connectToEventsList();
 });
 
 onUnmounted(() => {

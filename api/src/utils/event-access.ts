@@ -67,7 +67,7 @@ export async function removeUserEventTypeAccess(
     throw new Error("User not found");
   }
 
-  const updated = user.allowedEventTypes.filter((type) => type !== eventType);
+  const updated = user.allowedEventTypes.filter((type: string) => type !== eventType);
 
   await prisma.user.update({
     where: { personID },
