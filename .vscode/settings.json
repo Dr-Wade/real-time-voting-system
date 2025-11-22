@@ -1,0 +1,16 @@
+{
+    "editor.formatOnSave": false,
+    "files.autoSave": "onFocusChange",
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "always"
+    },
+    "eslint.validate": [
+      "vue",
+      "javascript",
+      "typescript"
+    ],
+    "tailwindCSS.experimental.classRegex": [
+        ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+        ["cx\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+    ]
+}

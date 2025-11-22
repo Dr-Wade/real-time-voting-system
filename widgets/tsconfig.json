@@ -1,0 +1,19 @@
+{
+  "files": [],
+  "extends": "@vue/tsconfig/tsconfig.dom.json",
+  "include": ["*.d.ts", "src/**/*", "src/**/*.vue", "src/**/*.json"],
+  "exclude": ["src/**/__tests__/*"],
+  "compilerOptions": {
+    "types": ["unplugin-icons/types/vue"],
+    "ignoreDeprecations": "5.0",
+    "lib": ["ESNext", "DOM"],
+    "target": "es6",
+    "composite": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+    }
+  }
+}

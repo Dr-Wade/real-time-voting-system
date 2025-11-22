@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:15.15
+    ports:
+      - "55432:5432"
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=polls
+    volumes:
+      - polls_pg_data:/postgresql
+
+  redis:
+    image: redis:alpine3.22
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - "polls_redis_data:/redis/data"
+
+volumes:
+  polls_pg_data:
+  polls_redis_data:

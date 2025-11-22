@@ -1,0 +1,22 @@
+{
+  "name": "vote-import",
+  "version": "1.0.0",
+  "description": "Import users from CSV files",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "import": "tsx src/import.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.11.1",
+  "dependencies": {
+    "prisma": "^5.9.1",
+    "@prisma/client": "^5.9.1",
+    "csv-parse": "^5.5.6"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0"
+  }
+}

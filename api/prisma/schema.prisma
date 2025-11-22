@@ -1,0 +1,73 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  personID          String   @id
+  name              String
+  allowedEventTypes String[] @default([])
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  votes Vote[]
+}
+
+model Event {
+  id           String   @id @default(uuid())
+  name         String
+  type         String
+  active       Boolean  @default(false)
+  activePollId String?  @unique
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  activePoll Poll?   @relation("activePoll", fields: [activePollId], references: [id])
+  polls      Poll[]  @relation("eventPolls")
+}
+
+model Poll {
+  id        String   @id @default(uuid())
+  title     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  eventId String?
+  event   Event?  @relation("eventPolls", fields: [eventId], references: [id])
+
+  activeEvent Event?  @relation("activePoll")
+
+  options PollOption[]
+  votes   Vote[]
+}
+
+model PollOption {
+  id     String @id @default(uuid())
+  title  String
+  pollId String
+
+  poll  Poll   @relation(fields: [pollId], references: [id])
+  votes Vote[]
+}
+
+model Vote {
+  id           Int      @id @default(autoincrement())
+  sessionId    String
+  personID     String
+  pollId       String
+  pollOptionId String
+  createdAt    DateTime @default(now())
+
+  user       User       @relation(fields: [personID], references: [personID])
+  pollOption PollOption @relation(fields: [pollOptionId], references: [id])
+  poll       Poll       @relation(fields: [pollId], references: [id])
+
+  @@unique([personID, pollId])
+}
